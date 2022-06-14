@@ -114,8 +114,8 @@ setup(
     # For an analysis of "install_requires" vs pip's requirements files see:
     # https://packaging.python.org/discussions/install-requires-vs-requirements/
     install_requires=[
-        'random',
-        'typing',
+        # 'random',
+        # 'typing',
 
     ],  # Optional
     # List additional groups of dependencies here (e.g. development
