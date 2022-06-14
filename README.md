@@ -1,5 +1,7 @@
 # Simple Splitter 🍌
 
+⚠️ This is a beta-version ⚠️
+
 # Presentation
 
 `simple_splitter` is a handy data-splitter that circumvents the some limitations of `scikit-learn`'s `train_test_split()`:

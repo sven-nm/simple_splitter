@@ -21,7 +21,7 @@ def _atomic_split(index: List[int], splits: List[Tuple[Any, float]]) -> List[Tup
             results += [(index.pop(0), s[0]) for _ in range(k)]  # Pop the first indices k-times
 
     if len(index) <= len(splits):  # If there are any left or if very small group, distribute with priority
-        results += [(index.pop(0), s[0]) for _ in range(len(index))]
+        results += [(index.pop(0), splits[i][0]) for i in range(len(index))]
 
     return results
 
@@ -93,3 +93,6 @@ def split(data_length: int,
         outputs = _sort_output(outputs)
         _print_stats(outputs, splits)
         return outputs
+
+
+# Todo : add version

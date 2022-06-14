@@ -1,5 +1,6 @@
 import random
 from simple_splitter import split
+import pytest
 
 random_seed = 42
 random.seed(random_seed)
