@@ -1,6 +1,13 @@
 import random
 from typing import List, Any, Optional, Tuple
 
+class Bonjour():
+    def __init__(self):
+        pass
+
+    def saluer(self):
+        print('bonjour')
+
 
 def _atomic_split(index: List[int], splits: List[Tuple[Any, float]]) -> List[Tuple[int, Any]]:
     """The atomic split function"""
@@ -10,18 +17,17 @@ def _atomic_split(index: List[int], splits: List[Tuple[Any, float]]) -> List[Tup
     results = []
 
     if len(index) > len(splits):
-        # Compute each split's sample size, with k ≤ len(indices)
-        sample_sizes = [max(min(int(s[1] * len(index))
-                                , len(index)) - 1,
-                            0) for s in splits]
 
+        sample_sizes = [int(s[1] * len(index)) for s in splits]  # Compute each split's sample size
         results += [(index.pop(0), s[0]) for s in splits]  # Distribute at least one sample per split
 
         for s, k in zip(splits, sample_sizes):  # len(splits) = len(k)
-            results += [(index.pop(0), s[0]) for _ in range(k)]  # Pop the first indices k-times
+            results += [(index.pop(0), s[0]) for _ in range(max(k-1),0)]  # Pop the first indices k-1 times
 
     if len(index) <= len(splits):  # If there are any left or if very small group, distribute with priority
         results += [(index.pop(0), splits[i][0]) for i in range(len(index))]
+
+    assert not index
 
     return results
 
@@ -94,6 +100,8 @@ def split(data_length: int,
         _print_stats(outputs, splits)
         return outputs
 
-
 # Todo : add version
 # Todo: add no dependency needed
+
+
+bonjour = 'bonjour'

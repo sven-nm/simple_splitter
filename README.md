@@ -18,7 +18,7 @@ of splits along your data. A matter of choice 😉
 
 # Example
 
-If you data is in a `pandas.DataFrame`, with columns of length `len(df.index)`, you can easily create your split column 
+If you data is in a `pandas.DataFrame`, with columns of length `len(df)`, you can easily create your split column 
 with `simple_splitter`: 
 
 ```python
@@ -27,12 +27,12 @@ from simple_splitter.split import split
 # Define you splits :
 splits = [('train', 0.65), ('dev1', 0.10), ('dev2', 0.10), ('test', 0.15)]
 
-split_column = split(data_length=len(my_df.index), splits=splits)
+split_column = split(data_length=len(my_df), splits=splits)
 ```
 
 If you need a stratified split, just passed your stratifying column :  
 ```python
-split_column = split(data_length=len(your_df.index), splits=splits, strats=my_df['my_stratitying_classes_column'])
+split_column = split(data_length=len(my_df), splits=splits, strats=my_df['my_stratitying_class_column'])
 ```
 Notice that if you wish to stratify according to more than one column, you just have to merge you multiple strats to a 
 single one 😉
