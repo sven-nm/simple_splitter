@@ -1,33 +1,44 @@
 import random
 from typing import List, Any, Optional, Tuple
 
-class Bonjour():
-    def __init__(self):
-        pass
 
-    def saluer(self):
-        print('bonjour')
-
-
-def _atomic_split(index: List[int], splits: List[Tuple[Any, float]]) -> List[Tuple[int, Any]]:
+def _atomic_split(index_: List[int],
+                  splits: List[Tuple[Any, float]],
+                  shuffle: bool = True,
+                  random_seed: int = 42) -> List[Tuple[int, Any]]:
     """The atomic split function"""
 
-    index = index.copy()
+    random.seed(random_seed)
+
+    index_ = index_.copy()
+
+    if shuffle:
+        random.shuffle(index_)
 
     results = []
 
-    if len(index) > len(splits):
+    if len(index_) > len(splits):
+        sample_sizes = [int(s[1] * len(index_)) for s in splits]  # Compute each split's sample size
 
-        sample_sizes = [int(s[1] * len(index)) for s in splits]  # Compute each split's sample size
-        results += [(index.pop(0), s[0]) for s in splits]  # Distribute at least one sample per split
+        # Rebalance samples size to have at least one element per sample if possible,
+        # substracting added element from a random sample than has more than one.
+        while 0 in sample_sizes and any([sz > 1 for sz in sample_sizes]):
+            zero_index = sample_sizes.index(0)
+            stock = random.choice([sz for sz in sample_sizes if sz > 1])
+            stock_index = sample_sizes.index(stock)
+            sample_sizes[zero_index] += 1
+            sample_sizes[stock_index] -= 1
 
-        for s, k in zip(splits, sample_sizes):  # len(splits) = len(k)
-            results += [(index.pop(0), s[0]) for _ in range(max(k-1),0)]  # Pop the first indices k-1 times
+        for s, k in zip(splits, sample_sizes):  # len(splits) = len(sample_sizes)
+            # try:
+            results += [(index_.pop(0), s[0]) for _ in range(k)]  # Pop the first index k times
+            # except IndexError:
+            #     print(sample_sizes)
 
-    if len(index) <= len(splits):  # If there are any left or if very small group, distribute with priority
-        results += [(index.pop(0), splits[i][0]) for i in range(len(index))]
+    if len(index_) <= len(splits):  # If there are any left or if very small group, distribute with priority
+        results += [(index_.pop(0), splits[i][0]) for i in range(len(index_))]
 
-    assert not index
+    assert not index_
 
     return results
 
@@ -55,7 +66,8 @@ def split(data_length: int,
 
     Args:
         data_length: The length of the data. For instance, if your data is a `pandas.DataFrame`, then you should set it
-                     to `len(df.index)`.
+                     to `len(df)`.
+
         splits: A list of tuples, where each tuple specifies the name/number/id of split and its ratio. For instance,
                 `[('train', 0.65), ('dev1', 0.10), ('dev2', 0.10), ('test', 0.15)]`.
                 Note:
@@ -63,9 +75,12 @@ def split(data_length: int,
                     - You can prioritise the distribution by ordering this list. For very tiny datasets, you sometimes
                       want to make sure that e.g. your test set gets available examples in priority. In that case,
                       you just want to set your test tuple as the first of the list (etc..)
+
         strats: A list of length `data_length` to be passed split data in a stratified fashion. If provided, splitting
                 is done at the level of each subset.
+
         shuffle: If set to false, data gets distributed into splits in a linear manner.
+
         random_seed: For reproducibility.
 
     Returns:
@@ -74,11 +89,9 @@ def split(data_length: int,
 
     assert sum([s[1] for s in splits]) == 1.0, """`splits` ratios should sum to 1"""
 
-    index = list(range(data_length))
 
-    if shuffle:
-        random.seed(random_seed)
-        random.shuffle(index)
+
+    index = list(range(data_length))
 
     if not strats:
         output = _sort_output(_atomic_split(index, splits=splits))
@@ -92,16 +105,8 @@ def split(data_length: int,
 
         for strat in set(strats):
             strat_index = [idx for idx, strat_ in zip(index, strats) if strat_ == strat]
-            if shuffle:
-                random.shuffle(strat_index)
-            outputs += _atomic_split(strat_index, splits)
+            outputs += _atomic_split(strat_index, splits, shuffle=shuffle, random_seed=random_seed)
 
         outputs = _sort_output(outputs)
         _print_stats(outputs, splits)
         return outputs
-
-# Todo : add version
-# Todo: add no dependency needed
-
-
-bonjour = 'bonjour'

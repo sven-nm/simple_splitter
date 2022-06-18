@@ -17,3 +17,5 @@ def test_split():
                          shuffle=shuffle,
                          random_seed=random_seed)
     assert len(output) == data_length
+
+
