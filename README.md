@@ -47,4 +47,4 @@ python -m pip install git+'https://github.com/sven-nm/simple_splitter'
 
 ## Let's chat !
 
-Any improvement suggestion/ideas are welcome ! 
+Any improvements, suggestions and ideas are welcome ! 
