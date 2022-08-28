@@ -93,7 +93,7 @@ def split(data_length: int,
 
     index = list(range(data_length))
 
-    if not strats:
+    if strats is None:
         output = _sort_output(_atomic_split(index, splits=splits))
         _print_stats(output, splits)
         return output
