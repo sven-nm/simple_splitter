@@ -1,8 +1,8 @@
 import random
-from typing import List, Any, Optional, Tuple
+from typing import List, Any, Optional, Tuple, Union
 
 
-def _atomic_split(index_: List[int],
+def _atomic_split(index: List[int],
                   splits: List[Tuple[Any, float]],
                   shuffle: bool = True,
                   random_seed: int = 42) -> List[Tuple[int, Any]]:
@@ -10,7 +10,7 @@ def _atomic_split(index_: List[int],
 
     random.seed(random_seed)
 
-    index_ = index_.copy()
+    index_ = index.copy()
 
     if shuffle:
         random.shuffle(index_)
@@ -53,58 +53,69 @@ def _print_stats(output: List[Any], splits: List[Tuple[Any, float]]):
         print(f"""Split {s[0]} got {count} examples (effective ratio: {count / len(output)}, expected: {s[1]})""")
 
 
-def split(data_length: int,
-          splits: List[Tuple[Any, float]],
-          strats: Optional[List[Any]] = None,
+def split(splits: List[Tuple[Any, Union[float, int]]],
+          data_length: int = None,
+          stratification_columns: Optional[List[Union[list, 'pd.Series']]] = None,
           shuffle: bool = True,
-          random_seed: int = 42,
-          ) -> List[Any]:
+          random_seed: int = 42) -> List[Any]:
     """Creates a split index for data of length `data_length` and according to the desired `splits`.
 
     This function returns a list of length `data_length` representing the distribution of splits, for instance,
     `['train', 'dev', 'dev', ... , 'test']`. On the contrary
 
     Args:
-        data_length: The length of the data. For instance, if your data is a `pandas.DataFrame`, then you should set it
-                     to `len(df)`.
+        splits: A list of tuples, where each tuple specifies the name/number/id of split and its ratio.
 
-        splits: A list of tuples, where each tuple specifies the name/number/id of split and its ratio. For instance,
-                `[('train', 0.65), ('dev1', 0.10), ('dev2', 0.10), ('test', 0.15)]`.
+                Examples:
+                    >>> splits = [('train', 0.65), ('dev1', 0.10), ('dev2', 0.10), ('test', 0.15)]
+                    >>> splits = [('train', 140), ('dev', 18), ('test', 20)]
                 Note:
                     - Split-ratios should sum to 1.
                     - You can prioritise the distribution by ordering this list. For very tiny datasets, you sometimes
                       want to make sure that e.g. your test set gets available examples in priority. In that case,
                       you just want to set your test tuple as the first of the list (etc..)
 
-        strats: A list of length `data_length` to be passed split data in a stratified fashion. If provided, splitting
+        data_length: The length of the data to split. If None, the length of the `stratification_columns` is used.
+
+        stratification_columns: A list of length `data_length` to be passed split data in a stratified fashion. If provided, splitting
                 is done at the level of each subset.
 
         shuffle: If set to false, data gets distributed into splits in a linear manner.
-
         random_seed: For reproducibility.
 
     Returns:
          A list of length `data_length` representing the distribution of splits.
     """
 
+    # We start by creating our index
+    index = list(range(data_length)) if data_length is not None else list(range(len(stratification_columns[0])))
+
+    # We convert the splits to a list of tuples ratios if necessary
+    if all([s[1] >= 1 for s in splits]) and len(splits) > 1:  # In case of unique split in pipeline
+        splits = [(s[0], s[1] / len(index)) for s in splits]
+
+    # We check that the splits are valid
     assert sum([s[1] for s in splits]) == 1.0, """`splits` ratios should sum to 1"""
 
-
-
-    index = list(range(data_length))
-
-    if strats is None:
+    # If no stratification columns are provided, we simply return the atomic split
+    if stratification_columns is None:
         output = _sort_output(_atomic_split(index, splits=splits))
         _print_stats(output, splits)
         return output
 
     else:
-        assert len(strats) == data_length, """`strats` must be a list of length `data_length`"""
+
+        # We check that the stratification columns are valid
+        assert all([len(stratification_columns[0]) == len(col) for col in stratification_columns]), \
+            """All stratification columns should have the same length"""
+
+        # We create a single stratification column
+        stratification_column = [tuple([s[i] for s in stratification_columns])
+                                 for i in range(len(stratification_columns[0]))]
 
         outputs = []
-
-        for strat in set(strats):
-            strat_index = [idx for idx, strat_ in zip(index, strats) if strat_ == strat]
+        for strat in set(stratification_column):
+            strat_index = [idx for idx, strat_ in zip(index, stratification_column) if strat_ == strat]
             outputs += _atomic_split(strat_index, splits, shuffle=shuffle, random_seed=random_seed)
 
         outputs = _sort_output(outputs)

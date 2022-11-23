@@ -17,15 +17,15 @@ of splits along your data. A matter of choice 😉
 ## Example
 
 If you data is in a `pandas.DataFrame`, with columns of length `len(df)`, you can easily create your split column 
-with `simple_splitter`: 
+with `simple_splitter`:
 
 ```python
-from simple_splitter.split import split 
+from simple_splitter.split import split
 
 # Define you splits :
 splits = [('train', 0.65), ('dev1', 0.10), ('dev2', 0.10), ('test', 0.15)]
 
-split_column = split(data_length=len(my_df), splits=splits)
+split_column = split(splits=splits, data_length=len(my_df))
 ```
 
 If you need a stratified split, just passed your stratifying column :  
